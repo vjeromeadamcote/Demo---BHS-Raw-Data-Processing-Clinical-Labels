@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the repository contents into the container at /app
 COPY . /app/
 
+# Install dependencies (if requirements.txt exists)
+RUN pip install --no-cache-dir -r requirements.txt || true
+
 # Make port 8080 available
 EXPOSE 8080
 
