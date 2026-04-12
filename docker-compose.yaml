@@ -5,7 +5,7 @@ services:
     networks:
       - app-network
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     # These match the Workbench security requirements
     cap_add:
       - SYS_ADMIN
