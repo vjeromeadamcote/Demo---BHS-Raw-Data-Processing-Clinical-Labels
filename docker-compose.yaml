@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    networks:
+      - app-network
+    ports:
+      - "8080:8080"
+    # These match the Workbench security requirements
+    cap_add:
+      - SYS_ADMIN
+    devices:
+      - /dev/fuse
+    security_opt:
+      - apparmor:unconfined
+
+networks:
+  app-network:
+    driver: bridge
