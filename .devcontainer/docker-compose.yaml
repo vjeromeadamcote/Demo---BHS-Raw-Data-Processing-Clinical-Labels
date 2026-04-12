@@ -1,7 +1,9 @@
-version: '3.8'
+ersion: '3.8'
 services:
   app:
-    build: .
+    build: 
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
     networks:
       - app-network
     ports:
