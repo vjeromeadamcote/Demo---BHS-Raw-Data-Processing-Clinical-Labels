@@ -8,5 +8,5 @@
     "apparmor:unconfined"
   ],
   "forwardPorts": [8080],
-  "postCreateCommand": "pip install --upgrade pip"
+  "postCreateCommand": "pip install --upgrade pip && pip install -r requirements.txt"
 }
