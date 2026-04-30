@@ -1,0 +1,8 @@
+{
+  "id": "digital-biomarker-explorer",
+  "version": "1.0.0",
+  "name": "Digital Biomarker Explorer",
+  "description": "BHS sensor-data explorer: signal viewer, feature lab, cohort insights, saved cohorts + feature runs. Port 8080.",
+  "options": {},
+  "platforms": ["Any"]
+}
