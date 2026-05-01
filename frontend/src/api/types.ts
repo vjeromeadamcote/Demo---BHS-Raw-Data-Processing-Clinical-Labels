@@ -73,7 +73,7 @@ export const MODALITY_LABEL: Record<Modality, string> = {
   HEMET: 'Autonomic Health',
   AMCLASS: 'Activity class',
   SLPSTG: 'Sleep stage',
-  SLPMET: 'Sleep metrics',
+  SLPMET: 'Sleep efficiency',
   ANNOTATIONS: 'Wear fraction',
 }
 
