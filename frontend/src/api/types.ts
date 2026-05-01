@@ -90,7 +90,7 @@ export const MODALITY_COLOR: Record<Modality, string> = {
 export const MODALITY_DESCRIPTION: Record<Modality, string> = {
   PULSE:
     'Heart rate (beats per minute) sampled sub-second by the wearable. Shown as a continuous line after bucket-averaging for the view.',
-  STEP: 'Per-event step counts from the watch pedometer algorithm. Each point is one detected step or step burst.',
+  STEP: 'Per-event step counts from the watch pedometer algorithm. Features calculated using validated Walking Suite Measures (WSM) with bout detection and cadence thresholds.',
   HEMET:
     'Autonomic health metrics: Resting heart rate (RHR), heart rate variability RMSSD, and SDNN index — one measurement per study day.',
   AMCLASS:
@@ -101,4 +101,14 @@ export const MODALITY_DESCRIPTION: Record<Modality, string> = {
     'Daily sleep summary: total sleep time, efficiency, WASO, awakenings, and stage fractions.',
   ANNOTATIONS:
     'Device wear segments with wear_fraction — used as a data-quality signal for every panel on this page.',
+}
+
+// Walking Suite Measures (WSM) constants
+export const WSM_CONSTANTS = {
+  BOUT_CADENCE_THRESHOLD: 0.6, // steps/second - minimum cadence for walking bout
+  CADENCE_DOUBLING_THRESHOLD: 3.0, // steps/second - threshold for resonant doubling correction
+  MINIMUM_BOUT_DURATION_SEC: 28, // seconds - minimum valid bout duration (30s - 2s buffer)
+  MAXIMUM_BOUT_GAP_SEC: 22, // seconds - maximum gap to bridge bouts (20s + 2s buffer)
+  LONG_BOUT_THRESHOLD_SEC: 118, // seconds - long bout definition (120s - 2s buffer)
+  STEP_COUNT_SAMPLE_TIME_SEC: 10, // seconds - time representation per data point
 }

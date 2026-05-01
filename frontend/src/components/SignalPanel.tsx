@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import type { Layout, PlotData } from 'plotly.js'
 import { LABEL_COLOR, type Label } from '../api/labels'
 import type { SignalSeries } from '../api/types'
-import { MODALITY_COLOR, MODALITY_DESCRIPTION, MODALITY_LABEL } from '../api/types'
+import { MODALITY_COLOR, MODALITY_DESCRIPTION, MODALITY_LABEL, WSM_CONSTANTS } from '../api/types'
 import InfoTip from './InfoTip'
 import PlotlyChart from './PlotlyChart'
 
@@ -229,6 +229,24 @@ export default function SignalPanel({
         <InfoTip label={MODALITY_LABEL[series.modality]}>
           {MODALITY_DESCRIPTION[series.modality]}
         </InfoTip>
+        {series.modality === 'STEP' && (
+          <>
+            <span className="text-[10px] text-verily-ink/40">· WSM validated</span>
+            <InfoTip label="Walking Suite Measures (WSM) Constants">
+              <div className="space-y-1 text-xs">
+                <p className="font-semibold text-verily-ink/90">Validated Thresholds:</p>
+                <ul className="ml-3 space-y-0.5 font-mono text-[11px]">
+                  <li>• Bout cadence threshold: {WSM_CONSTANTS.BOUT_CADENCE_THRESHOLD} steps/sec</li>
+                  <li>• Doubling correction: ≥{WSM_CONSTANTS.CADENCE_DOUBLING_THRESHOLD} steps/sec</li>
+                  <li>• Min bout duration: {WSM_CONSTANTS.MINIMUM_BOUT_DURATION_SEC}s</li>
+                  <li>• Max bout gap: {WSM_CONSTANTS.MAXIMUM_BOUT_GAP_SEC}s</li>
+                  <li>• Long bout threshold: {WSM_CONSTANTS.LONG_BOUT_THRESHOLD_SEC}s</li>
+                  <li>• Sample time: {WSM_CONSTANTS.STEP_COUNT_SAMPLE_TIME_SEC}s</li>
+                </ul>
+              </div>
+            </InfoTip>
+          </>
+        )}
         {series.points.length > 0 ? (
           <span className="text-[10px] text-verily-ink/50">
             · {series.points.length.toLocaleString()} pts
