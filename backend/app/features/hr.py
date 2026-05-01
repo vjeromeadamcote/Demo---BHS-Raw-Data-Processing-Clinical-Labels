@@ -22,20 +22,6 @@ def hr_summary(df: pd.DataFrame) -> dict[str, float | None]:
     }
 
 
-def hr_zones(df: pd.DataFrame, zones: list[tuple[int, int]] | None = None) -> dict[str, float]:
-    """Percent of samples in each HR zone (BPM ranges)."""
-    zones = zones or [(0, 60), (60, 90), (90, 120), (120, 150), (150, 220)]
-    v = df["value"].dropna().to_numpy(dtype=float)
-    out: dict[str, float] = {}
-    if v.size == 0:
-        for lo, hi in zones:
-            out[f"pct_{lo}_{hi}"] = 0.0
-        return out
-    for lo, hi in zones:
-        out[f"pct_{lo}_{hi}"] = float(((v >= lo) & (v < hi)).mean())
-    return out
-
-
 def hrv_from_hemet(df: pd.DataFrame) -> dict[str, float | None]:
     """HRV metrics from the HEMET table.
 

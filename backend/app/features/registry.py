@@ -31,14 +31,6 @@ FEATURES: list[FeatureDef] = [
         fn=hr.hr_summary,
     ),
     FeatureDef(
-        id="hr.zones",
-        label="HR zones (% time in BPM ranges)",
-        group="Heart rate",
-        modality="PULSE",
-        description="Fraction of window spent in each 30-BPM zone.",
-        fn=hr.hr_zones,
-    ),
-    FeatureDef(
         id="hr.hrv_approx",
         label="HRV (RMSSD / SDNN from HEMET)",
         group="Heart rate",
