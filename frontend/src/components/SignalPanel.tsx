@@ -59,6 +59,21 @@ export default function SignalPanel({
   showXAxisTitle = false,
   labels = [],
 }: Props) {
+  // Special rendering for HEMET: two separate charts
+  if (series.modality === 'HEMET') {
+    return (
+      <HEMETPanel
+        series={series}
+        height={height}
+        sharedRange={sharedRange}
+        onRelayout={onRelayout}
+        selectedRange={selectedRange}
+        showXAxisTitle={showXAxisTitle}
+        labels={labels}
+      />
+    )
+  }
+
   // Categorical ticks — remembered across trace/layout calcs so y-axis aligns with data.
   const categoricalTicks = useMemo(() => {
     if (series.modality !== 'AMCLASS' && series.modality !== 'SLPSTG') return null
@@ -109,42 +124,14 @@ export default function SignalPanel({
       x: xs,
       y: ys,
       type: 'scatter',
-      mode:
-        series.modality === 'HEMET' || series.modality === 'ANNOTATIONS'
-          ? 'markers'
-          : 'lines',
+      mode: series.modality === 'ANNOTATIONS' ? 'markers' : 'lines',
       line: { color, width: 1.2 },
-      marker: { color, size: series.modality === 'HEMET' ? 6 : 4 },
+      marker: { color, size: 4 },
       hovertemplate: `<b>%{y:.2f}${unitSuffix ? ' ' + unitSuffix : ''}</b><br>Study day %{x:.2f}<extra></extra>`,
-      showlegend: series.modality === 'HEMET',
-      name: series.modality === 'HEMET' ? 'RHR' : undefined,
+      showlegend: false,
     }
-    const out: Partial<PlotData>[] = [primary]
-    if (series.modality === 'HEMET' && series.extra_values) {
-      // HRV metric colors and labels
-      const hrvMetrics: Record<string, { label: string; color: string; unit: string }> = {
-        rmssd_mean: { label: 'RMSSD', color: '#4F7EE0', unit: 'ms' },
-        sdnn_index: { label: 'SDNN', color: '#E0A94F', unit: 'ms' },
-      }
-      for (const [k, vals] of Object.entries(series.extra_values)) {
-        const metric = hrvMetrics[k]
-        if (metric) {
-          out.push({
-            x: xs,
-            y: vals,
-            type: 'scatter',
-            mode: 'markers',
-            name: metric.label,
-            marker: { size: 6, symbol: 'diamond', color: metric.color },
-            hovertemplate: `<b>${metric.label}: %{y:.2f} ${metric.unit}</b><br>Study day %{x:.2f}<extra></extra>`,
-            showlegend: true,
-            visible: true,
-          })
-        }
-      }
-    }
-    return out
-  }, [series])
+    return [primary]
+  }, [series, categoricalTicks])
 
   const layout = useMemo<Partial<Layout>>(() => {
     // Saved label overlays — translucent colored rectangles sitting behind the data.
@@ -188,15 +175,7 @@ export default function SignalPanel({
         t: 4,
         b: showXAxisTitle ? 46 : 22,
       },
-      showlegend: series.modality === 'HEMET',
-      legend: series.modality === 'HEMET' ? {
-        orientation: 'h',
-        x: 0.5,
-        xanchor: 'center',
-        y: 1.02,
-        yanchor: 'bottom',
-        font: { size: 10 },
-      } : undefined,
+      showlegend: false,
       xaxis: {
         range: sharedRange ?? undefined,
         showgrid: true,
@@ -297,6 +276,254 @@ export default function SignalPanel({
           }
         }}
       />
+    </div>
+  )
+}
+
+// Special component for HEMET modality: renders two separate charts
+function HEMETPanel({
+  series,
+  height = 140,
+  sharedRange,
+  onRelayout,
+  selectedRange,
+  showXAxisTitle = false,
+  labels = [],
+}: Props) {
+  const xs = useMemo(() => series.points.map((p) => toStudyDays(p.t_ms)), [series.points])
+  const rhrValues = useMemo(() => series.points.map((p) => p.value), [series.points])
+
+  // Build label/selection shapes helper
+  const buildShapes = (selectedRange: [number, number] | null) => {
+    const labelShapes = labels.map((l) => ({
+      type: 'rect' as const,
+      xref: 'x' as const,
+      yref: 'paper' as const,
+      x0: l.study_day_start,
+      x1: l.study_day_end,
+      y0: 0,
+      y1: 1,
+      fillcolor: LABEL_COLOR[l.label],
+      opacity: 0.15,
+      line: { color: LABEL_COLOR[l.label], width: 1 },
+      layer: 'below' as const,
+    }))
+    return selectedRange
+      ? [
+          ...labelShapes,
+          {
+            type: 'rect' as const,
+            xref: 'x' as const,
+            yref: 'paper' as const,
+            x0: selectedRange[0],
+            x1: selectedRange[1],
+            y0: 0,
+            y1: 1,
+            fillcolor: '#A25BC5',
+            opacity: 0.12,
+            line: { width: 0 },
+          },
+        ]
+      : labelShapes
+  }
+
+  // RHR Chart (top)
+  const rhrTraces: Partial<PlotData>[] = useMemo(() => [{
+    x: xs,
+    y: rhrValues,
+    type: 'scatter',
+    mode: 'markers',
+    marker: { color: '#D35C65', size: 6 },
+    name: 'RHR',
+    hovertemplate: '<b>RHR: %{y:.1f} bpm</b><br>Study day %{x:.2f}<extra></extra>',
+    showlegend: false,
+  }], [xs, rhrValues])
+
+  const rhrLayout: Partial<Layout> = useMemo(() => ({
+    autosize: true,
+    height: height,
+    margin: { l: 100, r: 20, t: 4, b: 22 },
+    showlegend: false,
+    xaxis: {
+      range: sharedRange ?? undefined,
+      showgrid: true,
+      gridcolor: '#eceae2',
+      zeroline: false,
+      showticklabels: false,
+    },
+    yaxis: {
+      title: { text: 'RHR (bpm)', font: { size: 10, color: '#1a1d1f' } },
+      showgrid: true,
+      gridcolor: '#eceae2',
+      zeroline: false,
+    },
+    plot_bgcolor: 'white',
+    paper_bgcolor: 'white',
+    dragmode: 'zoom',
+    shapes: buildShapes(selectedRange),
+  }), [sharedRange, selectedRange, height, labels])
+
+  // HRV Chart (bottom) - RMSSD and SDNN
+  const hrvTraces: Partial<PlotData>[] = useMemo(() => {
+    if (!series.extra_values) return []
+    const traces: Partial<PlotData>[] = []
+
+    if (series.extra_values.rmssd_mean) {
+      traces.push({
+        x: xs,
+        y: series.extra_values.rmssd_mean,
+        type: 'scatter',
+        mode: 'markers',
+        marker: { color: '#4F7EE0', size: 6, symbol: 'diamond' },
+        name: 'RMSSD',
+        hovertemplate: '<b>RMSSD: %{y:.1f} ms</b><br>Study day %{x:.2f}<extra></extra>',
+        showlegend: true,
+      })
+    }
+
+    if (series.extra_values.sdnn_index) {
+      traces.push({
+        x: xs,
+        y: series.extra_values.sdnn_index,
+        type: 'scatter',
+        mode: 'markers',
+        marker: { color: '#E0A94F', size: 6, symbol: 'diamond' },
+        name: 'SDNN',
+        hovertemplate: '<b>SDNN: %{y:.1f} ms</b><br>Study day %{x:.2f}<extra></extra>',
+        showlegend: true,
+      })
+    }
+
+    return traces
+  }, [xs, series.extra_values])
+
+  const hrvLayout: Partial<Layout> = useMemo(() => ({
+    autosize: true,
+    height: height,
+    margin: { l: 100, r: 20, t: 4, b: showXAxisTitle ? 46 : 22 },
+    showlegend: true,
+    legend: {
+      orientation: 'h',
+      x: 0.5,
+      xanchor: 'center',
+      y: 1.05,
+      yanchor: 'bottom',
+      font: { size: 10 },
+    },
+    xaxis: {
+      range: sharedRange ?? undefined,
+      showgrid: true,
+      gridcolor: '#eceae2',
+      zeroline: false,
+      title: showXAxisTitle
+        ? {
+            text: 'Study day (since enrollment day 0)',
+            font: { size: 11, color: '#1a1d1f' },
+          }
+        : undefined,
+    },
+    yaxis: {
+      title: { text: 'HRV (ms)', font: { size: 10, color: '#1a1d1f' } },
+      showgrid: true,
+      gridcolor: '#eceae2',
+      zeroline: false,
+    },
+    plot_bgcolor: 'white',
+    paper_bgcolor: 'white',
+    dragmode: 'zoom',
+    shapes: buildShapes(selectedRange),
+  }), [sharedRange, selectedRange, height, showXAxisTitle, labels])
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-1.5 border-b border-verily-mute/60 bg-verily-paper/40 px-4 py-1.5 text-xs font-medium text-verily-ink/80">
+        <span
+          className="inline-block h-2 w-2 rounded-sm"
+          style={{ background: MODALITY_COLOR.HEMET }}
+        />
+        <span>{MODALITY_LABEL.HEMET}</span>
+        <span className="font-mono text-[10px] text-verily-ink/40">HEMET</span>
+        <InfoTip label={MODALITY_LABEL.HEMET}>
+          {MODALITY_DESCRIPTION.HEMET}
+        </InfoTip>
+        {series.points.length > 0 ? (
+          <span className="text-[10px] text-verily-ink/50">
+            · {series.points.length.toLocaleString()} pts
+          </span>
+        ) : null}
+        {series.points.length === 0 ? (
+          <span className="ml-auto text-[10px] italic text-verily-ink/40">
+            no data in window
+          </span>
+        ) : null}
+      </div>
+
+      {/* RHR Chart */}
+      <div className="border-b border-verily-mute/40">
+        <div className="bg-verily-paper/20 px-4 py-1 text-[10px] font-medium uppercase tracking-wide text-verily-ink/50">
+          Resting Heart Rate
+        </div>
+        <PlotlyChart
+          data={rhrTraces}
+          layout={rhrLayout}
+          config={{
+            displaylogo: false,
+            responsive: true,
+            modeBarButtonsToRemove: ['lasso2d', 'autoScale2d', 'toggleSpikelines'],
+          }}
+          style={{ width: '100%', height }}
+          onRelayout={(ev) => {
+            const x0 = ev['xaxis.range[0]']
+            const x1 = ev['xaxis.range[1]']
+            if (x0 !== undefined && x1 !== undefined) {
+              const next: [number, number] = [Number(x0), Number(x1)]
+              if (
+                !sharedRange ||
+                sharedRange[0] !== next[0] ||
+                sharedRange[1] !== next[1]
+              ) {
+                onRelayout(next)
+              }
+            } else if (ev['xaxis.autorange'] && sharedRange !== null) {
+              onRelayout(null)
+            }
+          }}
+        />
+      </div>
+
+      {/* HRV Chart */}
+      <div>
+        <div className="bg-verily-paper/20 px-4 py-1 text-[10px] font-medium uppercase tracking-wide text-verily-ink/50">
+          Heart Rate Variability
+        </div>
+        <PlotlyChart
+          data={hrvTraces}
+          layout={hrvLayout}
+          config={{
+            displaylogo: false,
+            responsive: true,
+            modeBarButtonsToRemove: ['lasso2d', 'autoScale2d', 'toggleSpikelines'],
+          }}
+          style={{ width: '100%', height }}
+          onRelayout={(ev) => {
+            const x0 = ev['xaxis.range[0]']
+            const x1 = ev['xaxis.range[1]']
+            if (x0 !== undefined && x1 !== undefined) {
+              const next: [number, number] = [Number(x0), Number(x1)]
+              if (
+                !sharedRange ||
+                sharedRange[0] !== next[0] ||
+                sharedRange[1] !== next[1]
+              ) {
+                onRelayout(next)
+              }
+            } else if (ev['xaxis.autorange'] && sharedRange !== null) {
+              onRelayout(null)
+            }
+          }}
+        />
+      </div>
     </div>
   )
 }
