@@ -4,6 +4,11 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+# Constants for cadence calculation (aligned with WSM validation)
+MS_TO_SEC = 0.001  # Milliseconds to seconds conversion
+BOUT_CADENCE_THRESHOLD = 1.0  # steps/second - minimum cadence to consider valid
+CADENCE_DOUBLING_THRESHOLD = 3.5  # steps/second - threshold for resonant doubling correction
+
 
 def step_summary(df: pd.DataFrame) -> dict[str, float | None]:
     """df: t_ms, value=step_count at that timestamp."""
@@ -19,24 +24,70 @@ def step_summary(df: pd.DataFrame) -> dict[str, float | None]:
     }
 
 
-def cadence(df: pd.DataFrame) -> dict[str, float | None]:
-    """Approximate mean cadence in steps/min using event timestamps.
+def calculate_cadence_from_stepcount(
+    step_count: np.ndarray,
+    step_interval: np.ndarray,
+    bout_cadence_threshold: float = BOUT_CADENCE_THRESHOLD,
+    cadence_doubling_threshold: float = CADENCE_DOUBLING_THRESHOLD,
+) -> np.ndarray:
+    """Calculates cadence from step counts and corresponding step intervals.
 
-    Cadence = 60000 / median inter-event interval within active bursts.
+    Args:
+        step_count: Array of step count values.
+        step_interval: Array of time intervals in milliseconds associated with
+            step count values. step_interval must be the same length as step
+            count.
+        bout_cadence_threshold: Cadence threshold below which returned values
+            are NaN.
+        cadence_doubling_threshold: Upper limit on steps/second.
+
+    Returns:
+        Array of cadence values the same length as step_count and step_interval.
     """
-    t = df["t_ms"].to_numpy(dtype=float)
-    v = df["value"].to_numpy(dtype=float)
-    mask = v > 0
-    ta = t[mask]
-    if ta.size < 4:
-        return {"cadence_spm": None, "n_events": int(ta.size)}
-    dt = np.diff(ta)
-    # Drop large gaps (>5 s) — treat as between-bout pauses
-    dt = dt[(dt > 0) & (dt < 5_000)]
-    if dt.size == 0:
-        return {"cadence_spm": None, "n_events": int(ta.size)}
-    median_ms = float(np.median(dt))
+    # Calculate cadence as steps/second.
+    cadence = step_count / (step_interval * MS_TO_SEC)
+    cadence[cadence < bout_cadence_threshold] = np.nan
+
+    # Correct resonant doubling of cadence.
+    cadence[cadence >= cadence_doubling_threshold] /= 2
+
+    return cadence
+
+
+def cadence(df: pd.DataFrame) -> dict[str, float | None]:
+    """Calculate mean cadence using step_interval from the STEP table.
+
+    Uses validated WSM cadence calculation: cadence = step_count / (step_interval * MS_TO_SEC)
+    Applies bout threshold filtering and resonant doubling correction.
+    """
+    if "step_interval" not in df.columns:
+        return {"cadence_spm": None, "cadence_mean_sps": None, "n_events": 0, "error": "step_interval column missing"}
+
+    step_count = df["value"].to_numpy(dtype=float)
+    step_interval = df["step_interval"].to_numpy(dtype=float)
+
+    # Filter out zero or invalid values
+    mask = (step_count > 0) & (step_interval > 0)
+    step_count = step_count[mask]
+    step_interval = step_interval[mask]
+
+    if step_count.size < 2:
+        return {"cadence_spm": None, "cadence_mean_sps": None, "n_events": int(step_count.size)}
+
+    # Calculate cadence using validated WSM method
+    cadence_sps = calculate_cadence_from_stepcount(step_count, step_interval)
+
+    # Filter out NaN values
+    valid_cadence = cadence_sps[~np.isnan(cadence_sps)]
+
+    if valid_cadence.size == 0:
+        return {"cadence_spm": None, "cadence_mean_sps": None, "n_events": int(step_count.size)}
+
+    # Return mean cadence in both steps/second and steps/minute
+    mean_sps = float(np.mean(valid_cadence))
     return {
-        "cadence_spm": 60_000.0 / median_ms if median_ms > 0 else None,
-        "n_events": int(ta.size),
+        "cadence_spm": mean_sps * 60.0,  # Convert to steps per minute
+        "cadence_mean_sps": mean_sps,  # Also return steps per second
+        "n_events": int(step_count.size),
+        "n_valid_events": int(valid_cadence.size),
     }
