@@ -17,7 +17,7 @@ const MODALITY_UNITS: Record<string, string> = {
 const MODALITY_Y_AXIS_TITLE: Record<string, string> = {
   PULSE: 'Heart rate (bpm)',
   STEP: 'Steps',
-  HEMET: 'Resting HR (bpm)',
+  HEMET: 'Autonomic Health',
   AMCLASS: 'Activity class',
   SLPSTG: 'Sleep stage',
   SLPMET: 'Sleep efficiency',
@@ -116,22 +116,31 @@ export default function SignalPanel({
       line: { color, width: 1.2 },
       marker: { color, size: series.modality === 'HEMET' ? 6 : 4 },
       hovertemplate: `<b>%{y:.2f}${unitSuffix ? ' ' + unitSuffix : ''}</b><br>Study day %{x:.2f}<extra></extra>`,
-      showlegend: false,
+      showlegend: series.modality === 'HEMET',
+      name: series.modality === 'HEMET' ? 'RHR' : undefined,
     }
     const out: Partial<PlotData>[] = [primary]
     if (series.modality === 'HEMET' && series.extra_values) {
+      // HRV metric colors and labels
+      const hrvMetrics: Record<string, { label: string; color: string; unit: string }> = {
+        rmssd_mean: { label: 'RMSSD', color: '#4F7EE0', unit: 'ms' },
+        sdnn_index: { label: 'SDNN', color: '#E0A94F', unit: 'ms' },
+      }
       for (const [k, vals] of Object.entries(series.extra_values)) {
-        out.push({
-          x: xs,
-          y: vals,
-          type: 'scatter',
-          mode: 'markers',
-          name: k,
-          marker: { size: 5, symbol: 'diamond' },
-          hovertemplate: `${k}: %{y:.2f}<extra></extra>`,
-          showlegend: true,
-          visible: 'legendonly',
-        })
+        const metric = hrvMetrics[k]
+        if (metric) {
+          out.push({
+            x: xs,
+            y: vals,
+            type: 'scatter',
+            mode: 'markers',
+            name: metric.label,
+            marker: { size: 6, symbol: 'diamond', color: metric.color },
+            hovertemplate: `<b>${metric.label}: %{y:.2f} ${metric.unit}</b><br>Study day %{x:.2f}<extra></extra>`,
+            showlegend: true,
+            visible: true,
+          })
+        }
       }
     }
     return out
@@ -179,7 +188,15 @@ export default function SignalPanel({
         t: 4,
         b: showXAxisTitle ? 46 : 22,
       },
-      showlegend: false,
+      showlegend: series.modality === 'HEMET',
+      legend: series.modality === 'HEMET' ? {
+        orientation: 'h',
+        x: 0.5,
+        xanchor: 'center',
+        y: 1.02,
+        yanchor: 'bottom',
+        font: { size: 10 },
+      } : undefined,
       xaxis: {
         range: sharedRange ?? undefined,
         showgrid: true,

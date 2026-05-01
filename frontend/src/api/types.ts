@@ -70,7 +70,7 @@ export const ALL_MODALITIES: Modality[] = [
 export const MODALITY_LABEL: Record<Modality, string> = {
   PULSE: 'Heart rate',
   STEP: 'Steps',
-  HEMET: 'HRV (daily)',
+  HEMET: 'Autonomic Health',
   AMCLASS: 'Activity class',
   SLPSTG: 'Sleep stage',
   SLPMET: 'Sleep metrics',
@@ -92,7 +92,7 @@ export const MODALITY_DESCRIPTION: Record<Modality, string> = {
     'Heart rate (beats per minute) sampled sub-second by the wearable. Shown as a continuous line after bucket-averaging for the view.',
   STEP: 'Per-event step counts from the watch pedometer algorithm. Each point is one detected step or step burst.',
   HEMET:
-    'Daily heart-rate-variability digest: resting HR, RMSSD, and SDNN index — one row per study day.',
+    'Autonomic health metrics: Resting heart rate (RHR), heart rate variability RMSSD, and SDNN index — one measurement per study day.',
   AMCLASS:
     'Algorithmically-classified activity state (e.g. walking, running, sedentary). Shown as a colored strip; each row is one detected segment.',
   SLPSTG:
