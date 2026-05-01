@@ -10,7 +10,7 @@ import PlotlyChart from './PlotlyChart'
 const MODALITY_UNITS: Record<string, string> = {
   PULSE: 'bpm',
   STEP: 'steps',
-  HEMET: 'bpm / ms',
+  HEMET: 'bpm',
   ANNOTATIONS: 'wear fraction',
 }
 
