@@ -8,7 +8,6 @@ from ..services import bq
 from ..features.step_feat import (
     calculate_cadence_from_stepcount,
     identify_walking_bouts,
-    calculate_bout_features,
     calculate_daily_step_features,
 )
 
