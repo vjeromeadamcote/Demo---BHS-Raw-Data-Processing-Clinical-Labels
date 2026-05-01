@@ -66,7 +66,7 @@ def _load_pulse(usubjid: str, day_min: int, day_max: int) -> pd.DataFrame:
 
 def _load_step(usubjid: str, day_min: int, day_max: int) -> pd.DataFrame:
     sql = f"""
-    SELECT study_day_int, milliseconds_from_midnight_utc AS ms, step_count AS value
+    SELECT study_day_int, milliseconds_from_midnight_utc AS ms, step_count AS value, step_interval
     FROM {bq.fq('sensordata', 'STEP')}
     WHERE USUBJID = @usubjid
       AND study_day_int BETWEEN @day_min AND @day_max
