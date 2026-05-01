@@ -64,6 +64,7 @@ export const ALL_MODALITIES: Modality[] = [
   'HEMET',
   'AMCLASS',
   'SLPSTG',
+  'SLPMET',
   'ANNOTATIONS',
 ]
 
