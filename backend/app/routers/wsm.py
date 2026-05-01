@@ -1,6 +1,7 @@
 """Walking Suite Measures (WSM) daily aggregates for visualization."""
 from __future__ import annotations
 
+import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
@@ -42,20 +43,23 @@ def get_wsm_daily(
     if day_max - day_min > 365:
         raise HTTPException(422, "Range limited to 365 study_days per request")
 
-    # Fetch STEP data for the range
-    sql = f"""
-    SELECT study_day_int, milliseconds_from_midnight_utc AS ms,
-           step_count AS value, step_interval
-    FROM {bq.fq('sensordata', 'STEP')}
-    WHERE USUBJID = @usubjid AND study_day_int BETWEEN @day_min AND @day_max
-    ORDER BY study_day_int, ms
-    """
-    params = {
-        "usubjid": usubjid,
-        "day_min": ("INT64", int(day_min)),
-        "day_max": ("INT64", int(day_max)),
-    }
-    df = bq.run_query(sql, params)
+    try:
+        # Fetch STEP data for the range
+        sql = f"""
+        SELECT study_day_int, milliseconds_from_midnight_utc AS ms,
+               step_count AS value, step_interval
+        FROM {bq.fq('sensordata', 'STEP')}
+        WHERE USUBJID = @usubjid AND study_day_int BETWEEN @day_min AND @day_max
+        ORDER BY study_day_int, ms
+        """
+        params = {
+            "usubjid": usubjid,
+            "day_min": ("INT64", int(day_min)),
+            "day_max": ("INT64", int(day_max)),
+        }
+        df = bq.run_query(sql, params)
+    except Exception as e:
+        raise HTTPException(500, f"BigQuery error: {str(e)}")
 
     if df.empty:
         return WSMDailyResponse(
@@ -101,28 +105,31 @@ def get_wsm_daily(
             )
             continue
 
-        # Calculate cadence
-        day_df_valid["cadence"] = calculate_cadence_from_stepcount(
-            day_df_valid["value"].values,
-            day_df_valid["step_interval"].values,
-        )
-
-        # Identify walking bouts
-        day_df_bouts = identify_walking_bouts(day_df_valid)
-
-        # Calculate daily features
-        features = calculate_daily_step_features(day_df_bouts)
-
-        daily_metrics.append(
-            WSMDailyPoint(
-                study_day=study_day,
-                total_steps=features["total_steps"],
-                ambulatory_minutes=features["ambulatory_minutes"],
-                top_15min_cadence_sps=features["top_15min_cadence_sps"],
-                top_30min_cadence_sps=features["top_30min_cadence_sps"],
-                top_60min_cadence_sps=features["top_60min_cadence_sps"],
+        try:
+            # Calculate cadence
+            day_df_valid["cadence"] = calculate_cadence_from_stepcount(
+                day_df_valid["value"].values,
+                day_df_valid["step_interval"].values,
             )
-        )
+
+            # Identify walking bouts
+            day_df_bouts = identify_walking_bouts(day_df_valid)
+
+            # Calculate daily features
+            features = calculate_daily_step_features(day_df_bouts)
+
+            daily_metrics.append(
+                WSMDailyPoint(
+                    study_day=study_day,
+                    total_steps=features["total_steps"],
+                    ambulatory_minutes=features["ambulatory_minutes"],
+                    top_15min_cadence_sps=features["top_15min_cadence_sps"],
+                    top_30min_cadence_sps=features["top_30min_cadence_sps"],
+                    top_60min_cadence_sps=features["top_60min_cadence_sps"],
+                )
+            )
+        except Exception as e:
+            raise HTTPException(500, f"WSM calculation error on day {study_day}: {str(e)}")
 
     return WSMDailyResponse(
         usubjid=usubjid,
