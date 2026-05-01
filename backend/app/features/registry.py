@@ -6,7 +6,7 @@ from typing import Callable
 
 import pandas as pd
 
-from . import activity, hr, sleep_feat, spectrogram, step_feat
+from . import activity, hr, sleep_feat, step_feat
 
 
 @dataclass(frozen=True)
@@ -40,31 +40,6 @@ FEATURES: list[FeatureDef] = [
             "Daily HRV metrics averaged across the selected window."
         ),
         fn=hr.hrv_from_hemet,
-    ),
-    # ── Spectral
-    FeatureDef(
-        id="spectral.psd_summary",
-        label="PSD summary (peak freq, peak power)",
-        group="Spectral",
-        modality="PULSE",
-        description="Welch PSD summary on uniformly resampled pulse.",
-        fn=spectrogram.psd_welch,
-    ),
-    FeatureDef(
-        id="spectral.band_0_02_0_2",
-        label="PSD band 0.02–0.2 Hz",
-        group="Spectral",
-        modality="PULSE",
-        description="Mean Welch PSD power in 0.02–0.2 Hz (slow HR trends).",
-        fn=lambda df: spectrogram.band_power(df, band=(0.02, 0.2), fs=1.0),
-    ),
-    FeatureDef(
-        id="spectral.band_0_2_0_5",
-        label="PSD band 0.2–0.5 Hz",
-        group="Spectral",
-        modality="PULSE",
-        description="Mean Welch PSD power in 0.2–0.5 Hz.",
-        fn=lambda df: spectrogram.band_power(df, band=(0.2, 0.5), fs=1.0),
     ),
     # ── Steps
     FeatureDef(
