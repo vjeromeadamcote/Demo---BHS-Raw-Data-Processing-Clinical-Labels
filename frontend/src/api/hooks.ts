@@ -37,6 +37,7 @@ import type {
   SignalsResponse,
   SubjectDetail,
   SubjectListResponse,
+  WSMDailyResponse,
 } from './types'
 
 export function useSubjects(params: {
@@ -331,6 +332,28 @@ export function useSignals(opts: {
           target_points: targetPoints,
         },
         paramsSerializer: { indexes: null },
+      })
+      return r.data
+    },
+    staleTime: 5 * 60_000,
+  })
+}
+
+export function useWSMDaily(opts: {
+  usubjid: string | null
+  dayMin: number
+  dayMax: number
+}) {
+  const { usubjid, dayMin, dayMax } = opts
+  return useQuery({
+    queryKey: ['wsm-daily', usubjid, dayMin, dayMax],
+    enabled: !!usubjid && dayMax >= dayMin,
+    queryFn: async () => {
+      const r = await api.get<WSMDailyResponse>(`wsm/${usubjid}`, {
+        params: {
+          day_min: dayMin,
+          day_max: dayMax,
+        },
       })
       return r.data
     },

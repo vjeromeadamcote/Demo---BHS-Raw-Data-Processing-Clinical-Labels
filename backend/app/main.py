@@ -6,7 +6,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import get_settings
-from .routers import cohorts, exports, feature_sets, features, labels, signals, subjects
+from .routers import cohorts, exports, feature_sets, features, labels, signals, subjects, wsm
 
 settings = get_settings()
 
@@ -30,6 +30,7 @@ app.include_router(cohorts.router, prefix="/api/cohorts", tags=["cohorts"])
 app.include_router(labels.router, prefix="/api/labels", tags=["labels"])
 app.include_router(feature_sets.router, prefix="/api/feature-sets", tags=["feature-sets"])
 app.include_router(exports.router, prefix="/api/exports", tags=["exports"])
+app.include_router(wsm.router, prefix="/api/wsm", tags=["wsm"])
 
 
 @app.get("/api/health")

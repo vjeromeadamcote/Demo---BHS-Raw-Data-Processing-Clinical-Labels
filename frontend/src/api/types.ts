@@ -113,3 +113,19 @@ export const WSM_CONSTANTS = {
   LONG_BOUT_THRESHOLD_SEC: 118, // seconds - long bout definition (120s - 2s buffer)
   STEP_COUNT_SAMPLE_TIME_SEC: 10, // seconds - time representation per data point
 }
+
+export interface WSMDailyPoint {
+  study_day: number
+  total_steps: number
+  ambulatory_minutes: number | null
+  top_15min_cadence_sps: number | null
+  top_30min_cadence_sps: number | null
+  top_60min_cadence_sps: number | null
+}
+
+export interface WSMDailyResponse {
+  usubjid: string
+  study_day_min: number
+  study_day_max: number
+  daily_metrics: WSMDailyPoint[]
+}

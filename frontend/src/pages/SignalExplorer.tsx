@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { useDaySummary, useLabels, useSignals, useSubject, useSubjects } from '../api/hooks'
+import { useDaySummary, useLabels, useSignals, useSubject, useSubjects, useWSMDaily } from '../api/hooks'
 import AnnotationSidebar from '../components/AnnotationSidebar'
 import DayNavigator from '../components/DayNavigator'
 import InfoTip from '../components/InfoTip'
 import type { Modality } from '../api/types'
 import { ALL_MODALITIES, MODALITY_DESCRIPTION, MODALITY_LABEL } from '../api/types'
 import SignalPanel from '../components/SignalPanel'
+import { TotalStepsPanel, AmbulatoryMinutesPanel, TopCadencePanel } from '../components/WSMPanels'
 
 export default function SignalExplorer() {
   const { usubjid: urlUsubjid } = useParams<{ usubjid: string }>()
@@ -47,6 +48,12 @@ export default function SignalExplorer() {
     dayMax,
     modalities,
     targetPoints: 2500,
+  })
+
+  const wsmDaily = useWSMDaily({
+    usubjid,
+    dayMin,
+    dayMax,
   })
 
   const daySummary = useDaySummary(usubjid)
@@ -241,6 +248,61 @@ export default function SignalExplorer() {
               ))}
             </div>
           )}
+
+          {/* WSM Daily Metrics */}
+          {usubjid && wsmDaily.data && wsmDaily.data.daily_metrics.length > 0 ? (
+            <div className="card overflow-hidden">
+              <div className="border-b border-verily-mute/60 bg-verily-paper px-4 py-2 text-sm font-semibold text-verily-ink">
+                Walking Suite Measures (Daily Aggregates)
+              </div>
+              <div className="border-t border-verily-mute">
+                <TotalStepsPanel
+                  data={wsmDaily.data}
+                  sharedRange={sharedRange}
+                  selectedRange={selectedRange}
+                  onRelayout={(range) => {
+                    setSharedRange(range)
+                    if (range) {
+                      setSelectedRange([range[0], range[1]])
+                    } else {
+                      setSelectedRange(null)
+                    }
+                  }}
+                />
+              </div>
+              <div className="border-t border-verily-mute">
+                <AmbulatoryMinutesPanel
+                  data={wsmDaily.data}
+                  sharedRange={sharedRange}
+                  selectedRange={selectedRange}
+                  onRelayout={(range) => {
+                    setSharedRange(range)
+                    if (range) {
+                      setSelectedRange([range[0], range[1]])
+                    } else {
+                      setSelectedRange(null)
+                    }
+                  }}
+                />
+              </div>
+              <div className="border-t border-verily-mute">
+                <TopCadencePanel
+                  data={wsmDaily.data}
+                  sharedRange={sharedRange}
+                  selectedRange={selectedRange}
+                  showXAxisTitle={true}
+                  onRelayout={(range) => {
+                    setSharedRange(range)
+                    if (range) {
+                      setSelectedRange([range[0], range[1]])
+                    } else {
+                      setSelectedRange(null)
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
 
           {selectedRange ? (
             <div className="card p-4 text-sm">
