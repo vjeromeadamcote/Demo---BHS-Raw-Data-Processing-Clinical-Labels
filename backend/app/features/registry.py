@@ -43,19 +43,27 @@ FEATURES: list[FeatureDef] = [
     ),
     # ── Steps
     FeatureDef(
-        id="step.summary",
-        label="Step summary (total / events / max)",
+        id="step.walking_suite",
+        label="Walking Suite Measures (comprehensive step features)",
         group="Steps",
         modality="STEP",
-        description="Total steps in the window plus event counts.",
-        fn=step_feat.step_summary,
+        description=(
+            "Comprehensive walking features from validated Walking Suite Measures: "
+            "daily step counts, ambulatory time, bout analysis (counts, durations), "
+            "top cadence windows (15/30/60min), and long bout metrics. "
+            "Uses validated cadence calculation with bout detection and resonant doubling correction."
+        ),
+        fn=step_feat.walking_suite_features,
     ),
     FeatureDef(
         id="step.cadence",
-        label="Cadence (steps/min, median of inter-event)",
+        label="Cadence (validated WSM calculation)",
         group="Steps",
         modality="STEP",
-        description="Median cadence within bursts of step events.",
+        description=(
+            "Mean cadence using validated WSM method: step_count / (step_interval * MS_TO_SEC). "
+            "Applies bout threshold filtering (>0.6 steps/sec) and resonant doubling correction (≥3.0 steps/sec ÷ 2)."
+        ),
         fn=step_feat.cadence,
     ),
     # ── Activity class
