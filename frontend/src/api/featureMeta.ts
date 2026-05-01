@@ -19,47 +19,128 @@ const METRIC_META: Record<string, MetricMeta> = {
   },
   'hr.summary.min': { label: 'Min HR', unit: 'bpm' },
   'hr.summary.max': { label: 'Max HR', unit: 'bpm' },
-  // ── hr.zones
-  'hr.zones.pct_0_60':   { label: '% time 0–60 bpm',    format: 'percent' },
-  'hr.zones.pct_60_90':  { label: '% time 60–90 bpm',   format: 'percent' },
-  'hr.zones.pct_90_120': { label: '% time 90–120 bpm',  format: 'percent' },
-  'hr.zones.pct_120_150':{ label: '% time 120–150 bpm', format: 'percent' },
-  'hr.zones.pct_150_220':{ label: '% time 150–220 bpm', format: 'percent' },
   // ── hr.hrv_approx
-  'hr.hrv_approx.rmssd_approx': {
-    label: 'RMSSD (approx)',
+  'hr.hrv_approx.rmssd_mean': {
+    label: 'RMSSD',
     unit: 'ms',
-    description:
-      'RMS of successive-RR differences, approximated from bpm → 60000/bpm. Higher = more parasympathetic activity.',
+    description: 'Root mean square of successive RR differences from HEMET table. Higher values indicate greater parasympathetic activity.',
   },
-  'hr.hrv_approx.sdnn_approx': {
-    label: 'SDNN (approx)',
+  'hr.hrv_approx.sdnn_index': {
+    label: 'SDNN index',
     unit: 'ms',
-    description: 'Standard deviation of reconstructed RR intervals.',
+    description: 'Mean of 5-minute standard deviations of RR intervals from HEMET table.',
   },
-  'hr.hrv_approx.n': { label: 'Samples used', format: 'count' },
-  // ── spectral.*
-  'spectral.psd_summary.peak_freq_hz': { label: 'Peak frequency', unit: 'Hz' },
-  'spectral.psd_summary.peak_power_db': { label: 'Peak power', unit: 'dB/Hz' },
-  'spectral.psd_summary.n_samples': { label: 'Spectrum samples', format: 'count' },
-  'spectral.band_0_02_0_2.power_linear': { label: 'Band power (linear)' },
-  'spectral.band_0_02_0_2.power_db': { label: 'Band power', unit: 'dB/Hz' },
-  'spectral.band_0_02_0_2.n_samples': { label: 'Samples', format: 'count' },
-  'spectral.band_0_2_0_5.power_linear': { label: 'Band power (linear)' },
-  'spectral.band_0_2_0_5.power_db': { label: 'Band power', unit: 'dB/Hz' },
-  'spectral.band_0_2_0_5.n_samples': { label: 'Samples', format: 'count' },
-  // ── step.summary
-  'step.summary.total_steps':     { label: 'Total steps', unit: 'steps' },
-  'step.summary.active_events':   { label: 'Active events', format: 'count', description: 'Sample points with step_count > 0.' },
-  'step.summary.mean_event_size': { label: 'Mean event size', unit: 'steps' },
-  'step.summary.max_event':       { label: 'Largest event', unit: 'steps' },
+  'hr.hrv_approx.rhr_mean': {
+    label: 'Resting HR (mean)',
+    unit: 'bpm',
+    description: 'Mean resting heart rate across days in the window.',
+  },
+  'hr.hrv_approx.n_days': { label: 'Days', format: 'count', description: 'Number of days with HEMET data in the window.' },
+  // ── step.walking_suite (WSM comprehensive features)
+  'step.walking_suite.total_steps': { label: 'Total steps', unit: 'steps', format: 'count' },
+  'step.walking_suite.ambulatory_minutes': {
+    label: 'Ambulatory time',
+    unit: 'min',
+    description: 'Time spent in walking bouts (cadence ≥ 0.6 steps/sec).'
+  },
+  'step.walking_suite.representation_hours': {
+    label: 'Data coverage',
+    unit: 'hours',
+    description: 'Total time represented by step data in the window.'
+  },
+  'step.walking_suite.top_15min_cadence_sps': {
+    label: 'Top 15-min cadence',
+    unit: 'steps/sec',
+    description: 'Mean cadence of the highest 15 minutes of walking.'
+  },
+  'step.walking_suite.top_30min_cadence_sps': {
+    label: 'Top 30-min cadence',
+    unit: 'steps/sec',
+    description: 'Mean cadence of the highest 30 minutes of walking.'
+  },
+  'step.walking_suite.top_60min_cadence_sps': {
+    label: 'Top 60-min cadence',
+    unit: 'steps/sec',
+    description: 'Mean cadence of the highest 60 minutes of walking.'
+  },
+  'step.walking_suite.num_bouts': {
+    label: 'Walking bouts',
+    format: 'count',
+    description: 'Number of continuous walking periods (≥28s duration, ≥0.6 steps/sec cadence).'
+  },
+  'step.walking_suite.total_bout_time_sec': {
+    label: 'Total bout time',
+    unit: 'sec',
+    description: 'Cumulative duration of all walking bouts.'
+  },
+  'step.walking_suite.mean_bout_duration_sec': {
+    label: 'Mean bout duration',
+    unit: 'sec',
+    description: 'Average duration of walking bouts.'
+  },
+  'step.walking_suite.median_bout_duration_sec': {
+    label: 'Median bout duration',
+    unit: 'sec',
+    description: 'Median duration of walking bouts.'
+  },
+  'step.walking_suite.max_bout_duration_sec': {
+    label: 'Longest bout',
+    unit: 'sec',
+    description: 'Duration of the longest walking bout.'
+  },
+  'step.walking_suite.num_long_bouts': {
+    label: 'Long bouts (≥118s)',
+    format: 'count',
+    description: 'Number of walking bouts lasting at least 118 seconds.'
+  },
+  'step.walking_suite.mean_long_bout_cadence': {
+    label: 'Mean long-bout cadence',
+    unit: 'steps/sec',
+    description: 'Average cadence during long bouts (≥118s).'
+  },
+  'step.walking_suite.num_bouts_30s_1min': {
+    label: 'Bouts 30s–1min',
+    format: 'count',
+    description: 'Number of bouts between 30 seconds and 1 minute.'
+  },
+  'step.walking_suite.num_bouts_1min': {
+    label: 'Bouts ≥1min',
+    format: 'count',
+    description: 'Number of bouts at least 1 minute long.'
+  },
+  'step.walking_suite.num_bouts_2min': {
+    label: 'Bouts ≥2min',
+    format: 'count',
+    description: 'Number of bouts at least 2 minutes long.'
+  },
+  'step.walking_suite.num_bouts_5min': {
+    label: 'Bouts ≥5min',
+    format: 'count',
+    description: 'Number of bouts at least 5 minutes long.'
+  },
+  'step.walking_suite.n_samples': {
+    label: 'Total samples',
+    format: 'count',
+    description: 'Number of raw step data points in the window.'
+  },
+  'step.walking_suite.n_valid_samples': {
+    label: 'Valid samples',
+    format: 'count',
+    description: 'Number of samples with step_count > 0 and step_interval > 0.'
+  },
   // ── step.cadence
   'step.cadence.cadence_spm': {
-    label: 'Cadence',
+    label: 'Mean cadence',
     unit: 'steps/min',
-    description: '60000 ÷ median inter-event interval, computed within bursts (<5 s gap).',
+    description: 'Mean cadence using validated WSM calculation: step_count / (step_interval × 0.001). Applies bout threshold (≥0.6 steps/sec) and doubling correction (≥3.0 steps/sec).',
+  },
+  'step.cadence.cadence_mean_sps': {
+    label: 'Mean cadence',
+    unit: 'steps/sec',
+    description: 'Mean cadence in steps per second.'
   },
   'step.cadence.n_events': { label: 'Step events', format: 'count' },
+  'step.cadence.n_valid_events': { label: 'Valid events', format: 'count', description: 'Events after applying bout threshold filter.' },
   // ── activity.transitions
   'activity.transitions.n_transitions': {
     label: 'Class transitions',
