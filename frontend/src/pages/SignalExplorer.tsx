@@ -250,6 +250,19 @@ export default function SignalExplorer() {
           )}
 
           {/* WSM Daily Metrics */}
+          {usubjid && wsmDaily.isLoading ? (
+            <div className="card p-4 text-sm text-verily-ink/50">
+              Loading WSM daily metrics…
+            </div>
+          ) : null}
+          {usubjid && wsmDaily.error ? (
+            <div className="card p-4 text-sm text-verily-warm">
+              <div className="font-semibold">WSM Daily Metrics fetch failed</div>
+              <div className="mt-1 whitespace-pre-wrap font-mono text-xs text-verily-ink/70">
+                {(wsmDaily.error as Error)?.message ?? String(wsmDaily.error)}
+              </div>
+            </div>
+          ) : null}
           {usubjid && wsmDaily.data && wsmDaily.data.daily_metrics.length > 0 ? (
             <div className="card overflow-hidden">
               <div className="border-b border-verily-mute/60 bg-verily-paper px-4 py-2 text-sm font-semibold text-verily-ink">
