@@ -69,6 +69,9 @@ def get_wsm_daily(
             daily_metrics=[],
         )
 
+    # Add t_ms column (epoch milliseconds for time sorting)
+    df["t_ms"] = df["study_day_int"] * 86_400_000 + df["ms"]
+
     # Compute metrics per day
     daily_metrics: list[WSMDailyPoint] = []
     for study_day in range(day_min, day_max + 1):
